@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel JJ TIENDA</title>
+<style>
+  :root{--bg:#0E0E10;--card:#1C1C1F;--text:#F2F0EB;--muted:#9A9A9F;--line:#2A2A2E;--gold:#C9A227;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;padding:16px;}
+  h1,h2{font-size:18px;margin:0 0 12px;}
+  h1{font-size:20px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;}
+  input,button{font-family:inherit;font-size:14px;}
+  input{width:100%;background:#101012;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px;margin-bottom:8px;}
+  button{background:var(--gold);color:#0E0E10;border:none;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;}
+  button.secondary{background:none;border:1px solid var(--line);color:var(--text);font-weight:500;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .balance{font-size:32px;font-weight:900;color:var(--gold);}
+  .row{display:flex;gap:8px;align-items:center;}
+  .row input{margin-bottom:0;}
+  .msg{font-size:13px;margin:6px 0;color:#E7896A;}
+  .hidden{display:none;}
+  .product-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="card" style="max-width:340px;margin:60px auto;">
+  <h1>Iniciar sesión — JJ TIENDA</h1>
+  <input id="loginEmail" type="email" placeholder="Correo">
+  <input id="loginPass" type="password" placeholder="Contraseña">
+  <button onclick="doLogin()" style="width:100%">Entrar</button>
+  <p class="msg" id="loginMsg"></p>
+</div>
+
+<div id="adminView" class="hidden">
+  <div class="topbar"><h1>Panel Administrador</h1><button class="secondary" onclick="doLogout()">Cerrar sesión</button></div>
+
+  <div class="card">
+    <h2>Crear vendedor</h2>
+    <input id="newName" placeholder="Nombre del vendedor">
+    <input id="newEmail" type="email" placeholder="Correo">
+    <input id="newPass" type="password" placeholder="Contraseña">
+    <button onclick="createSeller()">Crear vendedor</button>
+    <p class="msg" id="createMsg"></p>
+  </div>
+
+  <div class="card">
+    <h2>Vendedores</h2>
+    <table id="sellersTable"><thead><tr><th>Nombre</th><th>Correo</th><th>Saldo</th><th>Recargar</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="card">
+    <h2>Historial de compras (todos)</h2>
+    <table><thead><tr><th>Vendedor</th><th>Producto</th><th>Precio</th><th>Fecha</th></tr></thead><tbody id="allPurchasesBody"></tbody></table>
+  </div>
+</div>
+
+<div id="sellerView" class="hidden">
+  <div class="topbar"><h1 id="sellerHello">Mi cuenta</h1><button class="secondary" onclick="doLogout()">Cerrar sesión</button></div>
+
+  <div class="card">
+    <p style="color:var(--muted);margin:0 0 4px;">Tu saldo</p>
+    <div class="balance" id="myBalance">$0</div>
+  </div>
+
+  <div class="card">
+    <h2>Catálogo — comprar con tu saldo</h2>
+    <div id="catalog"></div>
+    <p class="msg" id="buyMsg"></p>
+  </div>
+
+  <div class="card">
+    <h2>Mis compras</h2>
+    <table><thead><tr><th>Producto</th><th>Precio</th><th>Fecha</th></tr></thead><tbody id="myPurchasesBody"></tbody></table>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, orderBy,
+  onSnapshot, runTransaction, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD0epzsEdo9tmWYvtF1s3kPGZBEccvhY1s",
+  authDomain: "tienda-jj.firebaseapp.com",
+  projectId: "tienda-jj",
+  storageBucket: "tienda-jj.firebasestorage.app",
+  messagingSenderId: "1010762670391",
+  appId: "1:1010762670391:web:01ce3eab826e8cb2de7ab2"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Catálogo (mismo del sitio). Ajusta precios de costo aquí si son distintos al de venta.
+const PRODUCTS = [
+  {id:"netflix", name:"Netflix Original", price:14000},
+  {id:"disney", name:"Disney Original", price:12500},
+  {id:"hbomax", name:"HBO Max", price:9000},
+  {id:"hbomax_platino", name:"HBO Max Platino", price:13000},
+  {id:"crunchyroll", name:"Crunchyroll", price:9000},
+  {id:"paramount", name:"Paramount Plus", price:9000},
+  {id:"plex", name:"Plex", price:9000},
+  {id:"vix", name:"ViX", price:9000}
+];
+
+const money = n => "$" + Number(n||0).toLocaleString("es-CO");
+const fecha = ts => ts?.toDate ? ts.toDate().toLocaleString("es-CO") : "—";
+
+window.doLogin = function(){
+  const email = document.getElementById("loginEmail").value.trim();
+  const pass = document.getElementById("loginPass").value;
+  document.getElementById("loginMsg").textContent = "";
+  signInWithEmailAndPassword(auth, email, pass)
+    .catch(e => document.getElementById("loginMsg").textContent = "Correo o contraseña incorrectos.");
+};
+window.doLogout = function(){ signOut(auth); };
+
+onAuthStateChanged(auth, async (user) => {
+  ["loginView","adminView","sellerView"].forEach(id => document.getElementById(id).classList.add("hidden"));
+  if(!user){ document.getElementById("loginView").classList.remove("hidden"); return; }
+
+  const snap = await getDoc(doc(db,"users",user.uid));
+  if(!snap.exists()){
+    document.getElementById("loginView").classList.remove("hidden");
+    document.getElementById("loginMsg").textContent = "Tu cuenta no está configurada. Contacta al administrador.";
+    await signOut(auth);
+    return;
+  }
+  const data = snap.data();
+  if(data.role === "admin"){
+    document.getElementById("adminView").classList.remove("hidden");
+    loadSellers();
+    loadAllPurchases();
+  } else {
+    document.getElementById("sellerView").classList.remove("hidden");
+    document.getElementById("sellerHello").textContent = "Hola, " + (data.name || "");
+    watchMyBalance(user.uid);
+    renderCatalog(user.uid, data.name);
+    loadMyPurchases(user.uid);
+  }
+});
+
+// ---------- ADMIN ----------
+window.createSeller = async function(){
+  const name = document.getElementById("newName").value.trim();
+  const email = document.getElementById("newEmail").value.trim();
+  const pass = document.getElementById("newPass").value;
+  const msg = document.getElementById("createMsg");
+  msg.textContent = "";
+  if(!name || !email || !pass){ msg.textContent = "Completa todos los campos."; return; }
+  try{
+    const secondaryApp = initializeApp(firebaseConfig, "Secondary" + Date.now());
+    const secondaryAuth = getAuth(secondaryApp);
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+    await setDoc(doc(db,"users",cred.user.uid), { role:"seller", name, email, balance:0, createdAt: serverTimestamp() });
+    await signOut(secondaryAuth);
+    document.getElementById("newName").value = "";
+    document.getElementById("newEmail").value = "";
+    document.getElementById("newPass").value = "";
+  }catch(e){ msg.textContent = "Error: " + e.message; }
+};
+
+function loadSellers(){
+  const q = query(collection(db,"users"), where("role","==","seller"));
+  onSnapshot(q, (qs) => {
+    const tbody = document.querySelector("#sellersTable tbody");
+    tbody.innerHTML = "";
+    qs.forEach(d => {
+      const s = d.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${s.name||""}</td><td>${s.email||""}</td><td>${money(s.balance)}</td>
+        <td><div class="row"><input type="number" placeholder="Monto" style="width:90px" id="amt_${d.id}">
+        <button onclick="recharge('${d.id}')">Recargar</button></div></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+window.recharge = async function(sellerId){
+  const input = document.getElementById("amt_"+sellerId);
+  const amount = Number(input.value);
+  if(!amount || amount <= 0) return;
+  await updateDoc(doc(db,"users",sellerId), { balance: increment(amount) });
+  input.value = "";
+};
+function loadAllPurchases(){
+  const q = query(collection(db,"purchases"), orderBy("timestamp","desc"));
+  onSnapshot(q, (qs) => {
+    const tbody = document.getElementById("allPurchasesBody");
+    tbody.innerHTML = "";
+    qs.forEach(d => {
+      const p = d.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${p.sellerName||""}</td><td>${p.product||""}</td><td>${money(p.price)}</td><td>${fecha(p.timestamp)}</td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+// ---------- VENDEDOR ----------
+function watchMyBalance(uid){
+  onSnapshot(doc(db,"users",uid), (d) => {
+    document.getElementById("myBalance").textContent = money(d.data()?.balance);
+  });
+}
+function renderCatalog(uid, name){
+  const el = document.getElementById("catalog");
+  el.innerHTML = PRODUCTS.map(p => `
+    <div class="product-row">
+      <span>${p.name} — ${money(p.price)}</span>
+      <button onclick="buy('${p.id}','${uid}')">Comprar</button>
+    </div>`).join("");
+}
+window.buy = async function(productId, uid){
+  const product = PRODUCTS.find(p => p.id === productId);
+  const msg = document.getElementById("buyMsg");
+  msg.textContent = "";
+  try{
+    await runTransaction(db, async (tx) => {
+      const userRef = doc(db,"users",uid);
+      const snap = await tx.get(userRef);
+      const data = snap.data();
+      if((data.balance||0) < product.price){ throw new Error("Saldo insuficiente."); }
+      tx.update(userRef, { balance: data.balance - product.price });
+      const purchaseRef = doc(collection(db,"purchases"));
+      tx.set(purchaseRef, { sellerId: uid, sellerName: data.name, product: product.name, price: product.price, timestamp: serverTimestamp() });
+    });
+  }catch(e){ msg.textContent = e.message; }
+};
+function loadMyPurchases(uid){
+  const q = query(collection(db,"purchases"), where("sellerId","==",uid), orderBy("timestamp","desc"));
+  onSnapshot(q, (qs) => {
+    const tbody = document.getElementById("myPurchasesBody");
+    tbody.innerHTML = "";
+    qs.forEach(d => {
+      const p = d.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${p.product||""}</td><td>${money(p.price)}</td><td>${fecha(p.timestamp)}</td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+</script>
+</body>
+</html>
