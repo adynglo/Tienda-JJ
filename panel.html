@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel JJ TIENDA</title>
+<style>
+  :root{--bg:#0E0E10;--card:#1C1C1F;--text:#F2F0EB;--muted:#9A9A9F;--line:#2A2A2E;--gold:#C9A227;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;padding:16px;}
+  h1,h2{font-size:18px;margin:0 0 12px;}
+  h1{font-size:20px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;}
+  input,button{font-family:inherit;font-size:14px;}
+  input{width:100%;background:#101012;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px;margin-bottom:8px;}
+  button{background:var(--gold);color:#0E0E10;border:none;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;}
+  button.secondary{background:none;border:1px solid var(--line);color:var(--text);font-weight:500;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .balance{font-size:32px;font-weight:900;color:var(--gold);}
+  .row{display:flex;gap:8px;align-items:center;}
+  .row input{margin-bottom:0;}
+  .msg{font-size:13px;margin:6px 0;color:#E7896A;}
+  .hidden{display:none;}
+  .msg.ok{color:#5BD08A;}
+  textarea{width:100%;background:#101012;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px;margin:8px 0;font-family:inherit;font-size:14px;min-height:70px;resize:vertical;}
+  .order{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;}
+  .order .t{font-weight:700;}
+  .order .s{color:var(--muted);font-size:12px;margin-top:2px;}
+  .delivery{background:#101012;border:1px dashed var(--gold);border-radius:8px;padding:10px;margin-top:8px;white-space:pre-wrap;word-break:break-word;font-size:14px;}
+  .badge-pend{color:#E8B84A;font-weight:700;}
+  .badge-ok{color:#5BD08A;font-weight:700;}
+  .toast{position:fixed;left:12px;right:12px;top:12px;z-index:99;background:#1C1C1F;border:2px solid var(--gold);color:var(--text);border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.6);}
+  .product-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast hidden"></div>
+
+<div id="loginView" class="card" style="max-width:340px;margin:60px auto;">
+  <h1>Iniciar sesión — JJ TIENDA</h1>
+  <input id="loginEmail" type="email" placeholder="Correo">
+  <input id="loginPass" type="password" placeholder="Contraseña">
+  <button onclick="doLogin()" style="width:100%">Entrar</button>
+  <p class="msg" id="loginMsg"></p>
+</div>
+
+<div id="adminView" class="hidden">
+  <div class="topbar"><h1>Panel Administrador</h1><button class="secondary" onclick="doLogout()">Cerrar sesión</button></div>
+
+  <div class="card">
+    <h2>Crear vendedor</h2>
+    <input id="newName" placeholder="Nombre del vendedor">
+    <input id="newEmail" type="email" placeholder="Correo">
+    <input id="newPass" type="password" placeholder="Contraseña">
+    <button onclick="createSeller()">Crear vendedor</button>
+    <p class="msg" id="createMsg"></p>
+  </div>
+
+  <div class="card">
+    <h2>Pedidos pendientes <span id="pendCount" class="badge-pend"></span></h2>
+    <div id="pendingList"></div>
+  </div>
+
+  <div class="card">
+    <h2>Vendedores</h2>
+    <table id="sellersTable"><thead><tr><th>Nombre</th><th>Correo</th><th>Saldo</th><th>Recargar</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="card">
+    <h2>Historial de compras (todos)</h2>
+    <table><thead><tr><th>Vendedor</th><th>Producto</th><th>Precio</th><th>Estado</th><th>Fecha</th></tr></thead><tbody id="allPurchasesBody"></tbody></table>
+  </div>
+</div>
+
+<div id="sellerView" class="hidden">
+  <div class="topbar"><h1 id="sellerHello">Mi cuenta</h1><button class="secondary" onclick="doLogout()">Cerrar sesión</button></div>
+
+  <div class="card">
+    <p style="color:var(--muted);margin:0 0 4px;">Tu saldo</p>
+    <div class="balance" id="myBalance">$0</div>
+  </div>
+
+  <div class="card">
+    <h2>Catálogo — comprar con tu saldo</h2>
+    <div id="catalog"></div>
+    <p class="msg" id="buyMsg"></p>
+  </div>
+
+  <div class="card">
+    <h2>Mis compras</h2>
+    <div id="myPurchasesList"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, where, orderBy,
+  onSnapshot, runTransaction, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD0epzsEdo9tmWYvtF1s3kPGZBEccvhY1s",
+  authDomain: "tienda-jj.firebaseapp.com",
+  projectId: "tienda-jj",
+  storageBucket: "tienda-jj.firebasestorage.app",
+  messagingSenderId: "1010762670391",
+  appId: "1:1010762670391:web:01ce3eab826e8cb2de7ab2"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Catálogo (mismo del sitio). Ajusta precios de costo aquí si son distintos al de venta.
+const PRODUCTS = [
+  {id:"netflix_generico", name:"Netflix Genérico (30 días)", price:11000},
+  {id:"netflix_original", name:"Netflix Original (27 días)", price:14000},
+  {id:"netflix_internacional", name:"Netflix Internacional (30 días)", price:16000},
+  {id:"amazon_prime", name:"Amazon Prime Video (30 días)", price:9000},
+  {id:"disney_std_generica", name:"Disney+ Estándar Genérica (30 días)", price:8500},
+  {id:"disney_std_original", name:"Disney+ Estándar Original", price:9500},
+  {id:"disney_prem_generica", name:"Disney+ Premium Genérica", price:10000},
+  {id:"disney_prem_original", name:"Disney+ Premium Original", price:13000},
+  {id:"flujo_tv", name:"Flujo TV (30 días)", price:13000},
+  {id:"apple_tv", name:"Apple TV", price:13000},
+  {id:"hbomax", name:"HBO Max (30 días)", price:9000},
+  {id:"hbomax_platino", name:"HBO Max Platino", price:13000},
+  {id:"plex", name:"Plex (30 días)", price:9000},
+  {id:"paramount", name:"Paramount Plus (30 días)", price:9000},
+  {id:"vix", name:"ViX (30 días)", price:9000},
+  {id:"crunchyroll", name:"Crunchyroll (30 días)", price:6000},
+  {id:"win_sports", name:"Win Sports+ (30 días)", price:20000},
+  {id:"spotify_30", name:"Spotify (30 días)", price:13000},
+  {id:"spotify_3m", name:"Spotify (3 meses)", price:32000},
+  {id:"youtube_premium", name:"YouTube Premium (30 días)", price:13000},
+  {id:"duolingo_pro", name:"Duolingo Pro (30 días)", price:10000},
+  {id:"chatgpt", name:"ChatGPT (30 días)", price:20000},
+  {id:"gemini_pro", name:"Gemini Pro", price:23000}
+];
+
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+window.drafts = {};
+let audioCtx;
+document.addEventListener("click", () => { if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } });
+function beep(){
+  try{
+    if(!audioCtx) return;
+    [0,0.25,0.5].forEach(t => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      o.frequency.value = 880; g.gain.value = 0.2;
+      o.start(audioCtx.currentTime + t); o.stop(audioCtx.currentTime + t + 0.15);
+    });
+  }catch(e){}
+}
+let toastTimer;
+function showToast(text, ms){
+  const t = document.getElementById("toast");
+  t.textContent = text; t.classList.remove("hidden");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add("hidden"), ms || 8000);
+}
+function notifyAdmin(text){
+  showToast(text, 12000); beep();
+  try{ navigator.vibrate && navigator.vibrate([300,150,300]); }catch(e){}
+  document.title = "🔔 Nuevo pedido — Panel JJ TIENDA";
+}
+const estadoTxt = st => st === "pendiente" ? '<span class="badge-pend">⏳ En proceso</span>'
+                       : st === "entregado" ? '<span class="badge-ok">✅ Entregado</span>' : "—";
+
+const money = n => "$" + Number(n||0).toLocaleString("es-CO");
+const fecha = ts => ts?.toDate ? ts.toDate().toLocaleString("es-CO") : "—";
+
+window.doLogin = function(){
+  const email = document.getElementById("loginEmail").value.trim();
+  const pass = document.getElementById("loginPass").value;
+  document.getElementById("loginMsg").textContent = "";
+  signInWithEmailAndPassword(auth, email, pass)
+    .catch(e => document.getElementById("loginMsg").textContent = "Correo o contraseña incorrectos.");
+};
+window.doLogout = function(){ signOut(auth); };
+
+onAuthStateChanged(auth, async (user) => {
+  ["loginView","adminView","sellerView"].forEach(id => document.getElementById(id).classList.add("hidden"));
+  if(!user){ document.getElementById("loginView").classList.remove("hidden"); return; }
+
+  const snap = await getDoc(doc(db,"users",user.uid));
+  if(!snap.exists()){
+    document.getElementById("loginView").classList.remove("hidden");
+    document.getElementById("loginMsg").textContent = "Tu cuenta no está configurada. Contacta al administrador.";
+    await signOut(auth);
+    return;
+  }
+  const data = snap.data();
+  if(data.role === "admin"){
+    document.getElementById("adminView").classList.remove("hidden");
+    loadSellers();
+    loadAllPurchases();
+  } else {
+    document.getElementById("sellerView").classList.remove("hidden");
+    document.getElementById("sellerHello").textContent = "Hola, " + (data.name || "");
+    watchMyBalance(user.uid);
+    renderCatalog(user.uid, data.name);
+    loadMyPurchases(user.uid);
+  }
+});
+
+// ---------- ADMIN ----------
+window.createSeller = async function(){
+  const name = document.getElementById("newName").value.trim();
+  const email = document.getElementById("newEmail").value.trim();
+  const pass = document.getElementById("newPass").value;
+  const msg = document.getElementById("createMsg");
+  msg.textContent = "";
+  if(!name || !email || !pass){ msg.textContent = "Completa todos los campos."; return; }
+  try{
+    const secondaryApp = initializeApp(firebaseConfig, "Secondary" + Date.now());
+    const secondaryAuth = getAuth(secondaryApp);
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+    await setDoc(doc(db,"users",cred.user.uid), { role:"seller", name, email, balance:0, createdAt: serverTimestamp() });
+    await signOut(secondaryAuth);
+    document.getElementById("newName").value = "";
+    document.getElementById("newEmail").value = "";
+    document.getElementById("newPass").value = "";
+  }catch(e){ msg.textContent = "Error: " + e.message; }
+};
+
+function loadSellers(){
+  const q = query(collection(db,"users"), where("role","==","seller"));
+  onSnapshot(q, (qs) => {
+    const tbody = document.querySelector("#sellersTable tbody");
+    tbody.innerHTML = "";
+    qs.forEach(d => {
+      const s = d.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${s.name||""}</td><td>${s.email||""}</td><td>${money(s.balance)}</td>
+        <td><div class="row"><input type="number" placeholder="Monto" style="width:90px" id="amt_${d.id}">
+        <button onclick="recharge('${d.id}')">Recargar</button></div></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+window.recharge = async function(sellerId){
+  const input = document.getElementById("amt_"+sellerId);
+  const amount = Number(input.value);
+  if(!amount || amount <= 0) return;
+  await updateDoc(doc(db,"users",sellerId), { balance: increment(amount) });
+  input.value = "";
+};
+let adminFirstLoad = true;
+function loadAllPurchases(){
+  const q = query(collection(db,"purchases"), orderBy("timestamp","desc"));
+  onSnapshot(q, (qs) => {
+    if(!adminFirstLoad){
+      qs.docChanges().forEach(ch => {
+        const p = ch.doc.data();
+        if(ch.type === "added" && p.status === "pendiente" && !ch.doc.metadata.hasPendingWrites){
+          notifyAdmin("🛒 " + (p.sellerName||"Vendedor") + " compró " + (p.product||"") + " (" + money(p.price) + ")");
+        }
+      });
+    }
+    adminFirstLoad = false;
+    const tbody = document.getElementById("allPurchasesBody");
+    const pend = document.getElementById("pendingList");
+    tbody.innerHTML = ""; pend.innerHTML = "";
+    let count = 0;
+    qs.forEach(d => {
+      const p = d.data();
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${p.sellerName||""}</td><td>${p.product||""}</td><td>${money(p.price)}</td><td>${estadoTxt(p.status)}</td><td>${fecha(p.timestamp)}</td>`;
+      tbody.appendChild(tr);
+      if(p.status === "pendiente"){
+        count++;
+        const div = document.createElement("div");
+        div.className = "order";
+        div.innerHTML = `<div class="t">${esc(p.sellerName)} — ${esc(p.product)}</div>
+          <div class="s">${money(p.price)} · ${fecha(p.timestamp)}</div>
+          <textarea id="dm_${d.id}" placeholder="Escribe aquí los datos de la cuenta o el mensaje para el vendedor..." oninput="drafts['${d.id}']=this.value">${esc(drafts[d.id]||"")}</textarea>
+          <button onclick="deliver('${d.id}')" style="width:100%">Enviar y marcar entregado</button>`;
+        pend.appendChild(div);
+      }
+    });
+    document.getElementById("pendCount").textContent = count ? "(" + count + ")" : "";
+    if(!count) pend.innerHTML = '<p style="color:var(--muted);margin:0">No hay pedidos pendientes.</p>';
+    if(!count) document.title = "Panel JJ TIENDA";
+  });
+}
+window.deliver = async function(id){
+  const box = document.getElementById("dm_"+id);
+  const text = box ? box.value.trim() : "";
+  try{
+    await updateDoc(doc(db,"purchases",id), { status:"entregado", deliveryMsg:text, deliveredAt: serverTimestamp() });
+    delete drafts[id];
+    showToast("✅ Pedido entregado y mensaje enviado", 4000);
+  }catch(e){ showToast("Error: " + e.message, 8000); }
+};
+
+// ---------- VENDEDOR ----------
+function watchMyBalance(uid){
+  onSnapshot(doc(db,"users",uid), (d) => {
+    document.getElementById("myBalance").textContent = money(d.data()?.balance);
+  });
+}
+function renderCatalog(uid, name){
+  const el = document.getElementById("catalog");
+  el.innerHTML = PRODUCTS.map(p => `
+    <div class="product-row">
+      <span>${p.name} — ${money(p.price)}</span>
+      <button onclick="buy('${p.id}','${uid}')">Comprar</button>
+    </div>`).join("");
+}
+window.buy = async function(productId, uid){
+  const product = PRODUCTS.find(p => p.id === productId);
+  const msg = document.getElementById("buyMsg");
+  msg.className = "msg"; msg.textContent = "";
+  try{
+    await runTransaction(db, async (tx) => {
+      const userRef = doc(db,"users",uid);
+      const snap = await tx.get(userRef);
+      const data = snap.data();
+      if((data.balance||0) < product.price){ throw new Error("Saldo insuficiente."); }
+      tx.update(userRef, { balance: data.balance - product.price });
+      const purchaseRef = doc(collection(db,"purchases"));
+      tx.set(purchaseRef, { sellerId: uid, sellerName: data.name, product: product.name, price: product.price, status: "pendiente", timestamp: serverTimestamp() });
+    });
+    msg.className = "msg ok";
+    msg.textContent = "✅ ¡Compra realizada! Tu pedido de " + product.name + " se está procesando. Te avisaremos cuando esté listo.";
+    showToast("✅ Tu pedido de " + product.name + " se está procesando", 8000);
+  }catch(e){ msg.className = "msg"; msg.textContent = e.message; }
+};
+window.copyMsg = async function(id){
+  try{ await navigator.clipboard.writeText(myMsgs[id]||""); showToast("Mensaje copiado", 2500); }
+  catch(e){ showToast("No se pudo copiar, selecciona el texto manualmente", 4000); }
+};
+let sellerFirstLoad = true;
+function loadMyPurchases(uid){
+  const q = query(collection(db,"purchases"), where("sellerId","==",uid), orderBy("timestamp","desc"));
+  onSnapshot(q, (qs) => {
+    if(!sellerFirstLoad){
+      qs.docChanges().forEach(ch => {
+        const p = ch.doc.data();
+        if(ch.type === "modified" && p.status === "entregado"){
+          showToast("✅ Tu pedido de " + (p.product||"") + " fue entregado. Revisa el mensaje en Mis compras.", 10000);
+          try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
+        }
+      });
+    }
+    sellerFirstLoad = false;
+    const list = document.getElementById("myPurchasesList");
+    list.innerHTML = "";
+    window.myMsgs = {};
+    qs.forEach(d => {
+      const p = d.data();
+      myMsgs[d.id] = p.deliveryMsg || "";
+      const div = document.createElement("div");
+      div.className = "order";
+      div.innerHTML = `<div class="t">${esc(p.product)} — ${money(p.price)}</div>
+        <div class="s">${fecha(p.timestamp)} · ${estadoTxt(p.status)}</div>` +
+        (p.deliveryMsg ? `<div class="delivery">${esc(p.deliveryMsg)}</div>
+          <button class="secondary" style="margin-top:8px" onclick="copyMsg('${d.id}')">Copiar mensaje</button>` : "");
+      list.appendChild(div);
+    });
+    if(!qs.size) list.innerHTML = '<p style="color:var(--muted);margin:0">Aún no has hecho compras.</p>';
+  });
+}
+</script>
+</body>
+</html>
