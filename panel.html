@@ -1,0 +1,1302 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel JJ TIENDA</title>
+<style>
+  :root{--bg:#0E0E10;--card:#1C1C1F;--text:#F2F0EB;--muted:#9A9A9F;--line:#2A2A2E;--gold:#C9A227;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;padding:16px;}
+  h1,h2{font-size:18px;margin:0 0 12px;}
+  h1{font-size:20px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;}
+  input,button{font-family:inherit;font-size:14px;}
+  input{width:100%;background:#101012;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px;margin-bottom:8px;}
+  button{background:var(--gold);color:#0E0E10;border:none;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer;}
+  button.secondary{background:none;border:1px solid var(--line);color:var(--text);font-weight:500;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .balance{font-size:32px;font-weight:900;color:var(--gold);}
+  .row{display:flex;gap:8px;align-items:center;}
+  .row input{margin-bottom:0;}
+  .msg{font-size:13px;margin:6px 0;color:#E7896A;}
+  .hidden{display:none;}
+  .msg.ok{color:#5BD08A;}
+  textarea{width:100%;background:#101012;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:10px;margin:8px 0;font-family:inherit;font-size:14px;min-height:70px;resize:vertical;}
+  .order{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;}
+  .order .t{font-weight:700;}
+  .order .s{color:var(--muted);font-size:12px;margin-top:2px;}
+  .jj{display:inline-block;background:var(--gold);color:#0E0E10;font-weight:800;border-radius:6px;padding:2px 8px;font-size:12px;margin-right:6px;}
+  .jj.none{background:none;border:1px dashed var(--line);color:var(--muted);font-weight:500;}
+  .delivery{background:#101012;border:1px dashed var(--gold);border-radius:8px;padding:10px;margin-top:8px;white-space:pre-wrap;word-break:break-word;font-size:14px;}
+  .badge-pend{color:#E8B84A;font-weight:700;}
+  .badge-ok{color:#5BD08A;font-weight:700;}
+  .toast{position:fixed;left:12px;right:12px;top:12px;z-index:99;background:#1C1C1F;border:2px solid var(--gold);color:var(--text);border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.6);}
+  .product-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
+  .balrow{display:flex;gap:12px;}
+  .balbox{flex:1;min-width:0;}
+  .balbox .balance{font-size:26px;}
+  .balance.avail{color:#5BD08A;}
+  .wd-form{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);}
+  .badge-rej{color:#E7896A;font-weight:700;}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:98;overflow-y:auto;padding:16px;}
+  .modal{max-width:420px;margin:12px auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;}
+  .paybox{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;}
+  .paybox .amt{font-size:22px;font-weight:800;color:var(--gold);}
+  .paybox .num{font-size:18px;font-weight:700;letter-spacing:.5px;word-break:break-all;margin-bottom:2px;}
+  .paybox .pend{color:#E8B84A;font-weight:700;padding:6px 0;}
+  .opt{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:8px;margin-top:8px;cursor:pointer;font-size:14px;}
+  .opt input{width:18px;height:18px;margin:0;padding:0;flex:none;accent-color:var(--gold);}
+  .upload{display:block;border:2px dashed var(--line);border-radius:10px;padding:14px;text-align:center;color:var(--muted);cursor:pointer;margin-top:10px;font-size:13px;}
+  .upload input{display:none;}
+  .upload img{max-width:100%;max-height:180px;border-radius:8px;display:block;margin:0 auto 6px;}
+  .proofs{display:grid;gap:10px;margin-top:10px;}
+  .proof img{width:100%;border-radius:8px;border:1px solid var(--line);display:block;margin:6px 0;}
+  a.dl{display:inline-block;background:var(--gold);color:#0E0E10;font-weight:700;border-radius:8px;padding:8px 12px;text-decoration:none;font-size:13px;}
+  .tabs{display:flex;gap:6px;margin:12px 0;}
+  .tab{flex:1;background:none;border:1px solid var(--line);color:var(--text);font-weight:500;padding:8px 4px;font-size:13px;}
+  .tab.active{background:var(--gold);color:#0E0E10;border-color:var(--gold);font-weight:700;}
+  .menu-wrap{position:relative;}
+  .menu-btn{font-size:18px;line-height:1;padding:8px 12px;}
+  .dropdown{position:absolute;top:calc(100% + 6px);left:0;background:var(--card);border:1px solid var(--line);border-radius:10px;min-width:200px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.6);overflow:hidden;}
+  .dropdown button{display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);color:var(--text);font-weight:500;padding:12px 14px;border-radius:0;}
+  .dropdown button:last-child{border-bottom:none;}
+  .dropdown button.active{color:var(--gold);font-weight:700;}
+  .badge-num{background:var(--gold);color:#0E0E10;border-radius:10px;padding:0 6px;font-size:11px;margin-left:6px;}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast hidden"></div>
+
+<div id="buyModal" class="modal-bg hidden">
+  <div class="modal">
+    <h2 id="buyTitle">Comprar</h2>
+    <div class="paybox">
+      <div id="payInfo1"></div>
+      <label class="upload">
+        <input type="file" accept="image/*" onchange="pickProof(1,this)">
+        <img id="prev1" class="hidden" alt="Comprobante 1">
+        <span id="uplTxt1">📷 Toca para subir el comprobante 1</span>
+      </label>
+    </div>
+    <div class="paybox">
+      <div id="payInfo2"></div>
+      <label class="upload">
+        <input type="file" accept="image/*" onchange="pickProof(2,this)">
+        <img id="prev2" class="hidden" alt="Comprobante 2">
+        <span id="uplTxt2">📷 Toca para subir el comprobante 2</span>
+      </label>
+    </div>
+    <div class="paybox">
+      <div class="s">Elige una opción para tu comisión</div>
+      <label class="opt"><input type="radio" name="commOpt" value="retirada"><span>Ya saqué mi comisión</span></label>
+      <label class="opt"><input type="radio" name="commOpt" value="sumar"><span>Quiero que se sume a mis comisiones</span></label>
+    </div>
+    <button id="buyDoneBtn" onclick="confirmBuy()" style="width:100%">Todo listo!!</button>
+    <button class="secondary" onclick="closeBuy()" style="width:100%;margin-top:8px">Cancelar</button>
+    <p class="msg" id="buyModalMsg"></p>
+  </div>
+</div>
+
+<div id="loginView" class="card" style="max-width:340px;margin:60px auto;">
+  <h1>Iniciar sesión — JJ TIENDA</h1>
+  <input id="loginEmail" type="email" placeholder="Correo">
+  <input id="loginPass" type="password" placeholder="Contraseña">
+  <button onclick="doLogin()" style="width:100%">Entrar</button>
+  <p class="msg" id="loginMsg"></p>
+</div>
+
+<div id="adminView" class="hidden">
+  <div class="topbar">
+    <div class="row menu-wrap" style="flex:none;gap:8px;margin:0">
+      <button class="secondary menu-btn" onclick="toggleAdminMenu()" aria-label="Menú">☰</button>
+      <button class="secondary" onclick="doLogout()">Cerrar sesión</button>
+      <div id="adminMenu" class="dropdown hidden">
+        <button data-sec="pendientes" onclick="showAdminSection('pendientes')">Pendientes <span id="mnPend" class="badge-num hidden"></span></button>
+        <button data-sec="aprobadas" onclick="showAdminSection('aprobadas')">Cuentas aprobadas</button>
+        <button data-sec="catalogo" onclick="showAdminSection('catalogo')">Precio de catálogo</button>
+        <button data-sec="casos" onclick="showAdminSection('casos')">Casos pendientes <span id="mnCasos" class="badge-num hidden"></span></button>
+        <button data-sec="general" onclick="showAdminSection('general')">General</button>
+      </div>
+    </div>
+    <h1 id="adminHello" style="margin:0;text-align:right;flex:1">Hola, Admin</h1>
+  </div>
+
+  <div id="sec-pendientes">
+    <div class="card">
+      <h2>Pedidos pendientes <span id="pendCount" class="badge-pend"></span></h2>
+      <div id="pendingList"></div>
+    </div>
+  </div>
+
+  <div id="sec-aprobadas" class="hidden">
+    <div class="card">
+      <h2>Cuentas aprobadas</h2>
+      <input id="approvedSearch" type="search" placeholder="🔍 Buscar por JJ..." oninput="setApprovedSearch(this.value)">
+      <div id="approvedList"></div>
+    </div>
+  </div>
+
+  <div id="sec-catalogo" class="hidden">
+    <div class="card">
+      <h2>Precio de catálogo</h2>
+      <p style="color:var(--muted);font-size:12px;margin:0 0 10px">El precio es lo que paga el vendedor por la cuenta. El sugerido es solo una referencia de a cómo revenderla.</p>
+      <div id="catalogEditList"></div>
+    </div>
+    <div class="card">
+      <h2>Agregar producto</h2>
+      <input id="newProdName" placeholder="Nombre del producto">
+      <input id="newProdPrice" type="number" inputmode="numeric" placeholder="Precio (lo que paga el vendedor)">
+      <input id="newProdSuggested" type="number" inputmode="numeric" placeholder="Precio sugerido de venta (opcional)">
+      <button onclick="addProduct()" style="width:100%">Agregar producto</button>
+      <p class="msg" id="newProdMsg"></p>
+    </div>
+  </div>
+
+  <div id="sec-casos" class="hidden">
+    <div class="card">
+      <h2>Nuevo caso</h2>
+      <select id="caseSellerId"><option value="">Elige un vendedor...</option></select>
+      <input id="caseJJ" placeholder="JJ de la cuenta (opcional)">
+      <textarea id="caseMsg" placeholder="Describe el problema o el mensaje para el vendedor..."></textarea>
+      <button onclick="createCase()" style="width:100%">Enviar caso</button>
+      <p class="msg" id="caseMsgStatus"></p>
+    </div>
+    <div class="card">
+      <h2>Casos pendientes <span id="casesCount" class="badge-pend"></span></h2>
+      <div id="casesList"></div>
+    </div>
+  </div>
+
+  <div id="sec-general" class="hidden">
+    <div class="card">
+      <h2>Crear vendedor</h2>
+      <input id="newName" placeholder="Nombre del vendedor">
+      <input id="newEmail" type="email" placeholder="Correo">
+      <input id="newPass" type="password" placeholder="Contraseña">
+      <button onclick="createSeller()">Crear vendedor</button>
+      <p class="msg" id="createMsg"></p>
+    </div>
+
+    <div class="card">
+      <h2>Retiros pendientes <span id="wdPendCount" class="badge-pend"></span></h2>
+      <div id="pendingWithdrawals"></div>
+    </div>
+
+    <div class="card">
+      <h2>Cuentas de pago</h2>
+      <p style="color:var(--muted);font-size:12px;margin:0 0 10px">Es lo que ve el vendedor al comprar. Si falta el número o el monto del producto, le sale "pendiente".</p>
+      <div class="order">
+        <div class="t">Cuenta 1</div>
+        <input id="cfgNum1" type="tel" inputmode="numeric" placeholder="Número de cuenta" style="margin-top:8px">
+      </div>
+      <div class="order">
+        <div class="t">Cuenta 2</div>
+        <input id="cfgNum2" type="tel" inputmode="numeric" placeholder="Número de cuenta" style="margin-top:8px">
+      </div>
+      <h2 style="margin-top:14px">Monto por producto</h2>
+      <p style="color:var(--muted);font-size:12px;margin:0 0 10px">Lo que debe salir en el comprobante de cada cuenta, según el producto.</p>
+      <div id="cfgProducts" style="margin-bottom:12px"></div>
+      <button onclick="savePaymentConfig()" style="width:100%">Guardar cuentas</button>
+      <p class="msg" id="cfgMsg"></p>
+    </div>
+
+    <div class="card">
+      <h2>Retiros negados (motivo)</h2>
+      <div id="deniedWithdrawals"></div>
+    </div>
+
+    <div class="card">
+      <h2>Vendedores</h2>
+      <table id="sellersTable"><thead><tr><th>Nombre</th><th>Correo</th><th>Disponible</th><th></th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="card">
+      <h2>Historial completo (todos los estados)</h2>
+      <input id="searchBox" type="search" placeholder="🔍 Buscar por JJ, vendedor o producto..." oninput="setSearch(this.value)">
+      <div id="allPurchasesList"></div>
+    </div>
+  </div>
+</div>
+
+<div id="sellerView" class="hidden">
+  <div class="topbar"><h1 id="sellerHello">Mi cuenta</h1><button class="secondary" onclick="doLogout()">Cerrar sesión</button></div>
+
+  <div class="card">
+    <div class="balrow">
+      <div class="balbox">
+        <p style="color:var(--muted);margin:0 0 4px;">Saldo disponible</p>
+        <div class="balance avail" id="myAvailable">$0</div>
+        <button onclick="openWithdraw()" style="margin-top:8px">Retirar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="myCasesCard">
+    <h2>Casos <span id="myCasesCount" class="badge-pend"></span></h2>
+    <div id="myCasesList"></div>
+  </div>
+
+  <div class="card" id="withdrawalsCard">
+    <button class="secondary" onclick="toggleWithdrawals()" style="width:100%;display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:700">
+      <span>Mis retiros <span id="wdPendBadge" class="badge-pend"></span></span><span id="wdArrow">▾</span>
+    </button>
+    <div id="withdrawalsPanel" class="hidden">
+      <div class="tabs">
+        <button class="tab active" id="tab_retirar" onclick="showWdTab('retirar')">Retirar</button>
+        <button class="tab" id="tab_pendiente" onclick="showWdTab('pendiente')">Pendientes</button>
+        <button class="tab" id="tab_historial" onclick="showWdTab('historial')">Historial</button>
+      </div>
+      <div id="wdPane_retirar">
+        <input id="wdAmount" type="number" inputmode="numeric" placeholder="Monto a retirar">
+        <input id="wdNequi" type="tel" inputmode="numeric" placeholder="Número de Nequi">
+        <button onclick="requestWithdraw()" style="width:100%">Enviar solicitud</button>
+        <p class="msg" id="wdMsg"></p>
+      </div>
+      <div id="wdPane_pendiente" class="hidden"><div id="myPendingWithdrawals"></div></div>
+      <div id="wdPane_historial" class="hidden">
+        <p style="color:var(--muted);font-size:12px;margin:0 0 10px">ℹ️ El historial de retiros se borra después de 30 días.</p>
+        <div id="myWithdrawalsHistory"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="purchasesCard">
+    <button class="secondary" onclick="togglePurchases()" style="width:100%;display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:700">
+      <span>Mis compras</span><span id="pcArrow">▾</span>
+    </button>
+    <div id="purchasesPanel" class="hidden" style="margin-top:12px">
+      <div id="myPurchasesList"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Catálogo — comprar con tu saldo</h2>
+    <div id="catalog"></div>
+    <p class="msg" id="buyMsg"></p>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, increment, collection, query, where, orderBy,
+  onSnapshot, runTransaction, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD0epzsEdo9tmWYvtF1s3kPGZBEccvhY1s",
+  authDomain: "tienda-jj.firebaseapp.com",
+  projectId: "tienda-jj",
+  storageBucket: "tienda-jj.firebasestorage.app",
+  messagingSenderId: "1010762670391",
+  appId: "1:1010762670391:web:01ce3eab826e8cb2de7ab2"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Catálogo por defecto: se usa solo para crear la colección "catalog" en Firestore la primera vez.
+const DEFAULT_CATALOG = [
+  {id:"netflix_generico", name:"Netflix Genérico (30 días)", price:11000},
+  {id:"netflix_original", name:"Netflix Original (27 días)", price:14000},
+  {id:"netflix_internacional", name:"Netflix Internacional (30 días)", price:16000},
+  {id:"amazon_prime", name:"Amazon Prime Video (30 días)", price:9000},
+  {id:"disney_std_generica", name:"Disney+ Estándar Genérica (30 días)", price:8500},
+  {id:"disney_std_original", name:"Disney+ Estándar Original", price:9500},
+  {id:"disney_prem_generica", name:"Disney+ Premium Genérica", price:10000},
+  {id:"disney_prem_original", name:"Disney+ Premium Original", price:13000},
+  {id:"flujo_tv", name:"Flujo TV (30 días)", price:13000},
+  {id:"apple_tv", name:"Apple TV", price:13000},
+  {id:"hbomax", name:"HBO Max (30 días)", price:9000},
+  {id:"hbomax_platino", name:"HBO Max Platino", price:13000},
+  {id:"plex", name:"Plex (30 días)", price:9000},
+  {id:"paramount", name:"Paramount Plus (30 días)", price:9000},
+  {id:"vix", name:"ViX (30 días)", price:9000},
+  {id:"crunchyroll", name:"Crunchyroll (30 días)", price:6000},
+  {id:"win_sports", name:"Win Sports+ (30 días)", price:20000},
+  {id:"spotify_30", name:"Spotify (30 días)", price:13000},
+  {id:"spotify_3m", name:"Spotify (3 meses)", price:32000},
+  {id:"youtube_premium", name:"YouTube Premium (30 días)", price:13000},
+  {id:"duolingo_pro", name:"Duolingo Pro (30 días)", price:10000},
+  {id:"chatgpt", name:"ChatGPT (30 días)", price:20000},
+
+  {id:"gemini_pro", name:"Gemini Pro", price:23000}
+];
+
+let CATALOG = [];
+let catalogWatching = false;
+function watchCatalog(){
+  if(catalogWatching) return;
+  catalogWatching = true;
+  const q = query(collection(db,"catalog"), orderBy("name"));
+  onSnapshot(q, async (qs) => {
+    if(qs.empty){
+      try{
+        for(const p of DEFAULT_CATALOG){
+          await setDoc(doc(db,"catalog",p.id), { name:p.name, price:p.price, suggestedPrice:null, createdAt: serverTimestamp() });
+        }
+      }catch(e){ /* el vendedor no tiene permiso de escribir; solo el admin puede sembrar el catálogo */ }
+      return;
+    }
+    CATALOG = qs.docs.map(d => ({ id:d.id, ...d.data() }));
+    if(document.getElementById("catalog")) renderCatalog(auth.currentUser?.uid, mySellerName);
+    if(document.getElementById("catalogEditList")) renderCatalogEditor();
+    if(document.getElementById("cfgProducts")) renderCfgProductsList();
+  }, (err) => {
+    if(document.getElementById("catalog")) document.getElementById("catalog").innerHTML = '<p class="msg">Error al cargar el catálogo: ' + esc(err.message) + '</p>';
+  });
+}
+
+const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+window.drafts = {};
+let audioCtx;
+function unlockAudio(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+  }catch(e){}
+}
+["click","touchstart","keydown"].forEach(ev => document.addEventListener(ev, unlockAudio, {passive:true}));
+
+// kind: "new" = alerta fuerte (pedido nuevo), "done" = campanita (entregado / recarga), "ok" = pitido corto
+function playSound(kind){
+  try{
+    unlockAudio();
+    if(!audioCtx) return;
+    const patterns = {
+      new:  [[880,0,0.15],[880,0.25,0.15],[880,0.5,0.15]],
+      done: [[660,0,0.15],[880,0.18,0.15],[1175,0.36,0.3]],
+      ok:   [[740,0,0.12],[988,0.15,0.18]]
+    };
+    (patterns[kind] || patterns.ok).forEach(([f,t,d]) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      o.connect(g); g.connect(audioCtx.destination);
+      const t0 = audioCtx.currentTime + t;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+      o.start(t0); o.stop(t0 + d + 0.05);
+    });
+  }catch(e){}
+}
+function beep(){ playSound("new"); }
+let toastTimer;
+function showToast(text, ms){
+  const t = document.getElementById("toast");
+  t.textContent = text; t.classList.remove("hidden");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add("hidden"), ms || 8000);
+}
+function notifyAdmin(text, title){
+  showToast(text, 12000); beep();
+  try{ navigator.vibrate && navigator.vibrate([300,150,300]); }catch(e){}
+  document.title = "🔔 " + (title || "Nuevo pedido") + " — Panel JJ TIENDA";
+}
+const COMMISSION = 3000; // comisión por cada pedido entregado
+const estadoTxt = st => st === "pendiente" ? '<span class="badge-pend">⏳ En proceso</span>'
+                       : st === "entregado" ? '<span class="badge-ok">✅ Entregado</span>'
+                       : st === "rechazado" ? '<span class="badge-rej">❌ Rechazado</span>' : "—";
+
+const money = n => "$" + Number(n||0).toLocaleString("es-CO");
+const fecha = ts => ts?.toDate ? ts.toDate().toLocaleString("es-CO") : "—";
+
+window.doLogin = function(){
+  const email = document.getElementById("loginEmail").value.trim();
+  const pass = document.getElementById("loginPass").value;
+  document.getElementById("loginMsg").textContent = "";
+  signInWithEmailAndPassword(auth, email, pass)
+    .catch(e => document.getElementById("loginMsg").textContent = "Correo o contraseña incorrectos.");
+};
+window.doLogout = function(){ signOut(auth); };
+
+onAuthStateChanged(auth, async (user) => {
+  ["loginView","adminView","sellerView"].forEach(id => document.getElementById(id).classList.add("hidden"));
+  if(!user){ document.getElementById("loginView").classList.remove("hidden"); return; }
+
+  const snap = await getDoc(doc(db,"users",user.uid));
+  if(!snap.exists()){
+    document.getElementById("loginView").classList.remove("hidden");
+    document.getElementById("loginMsg").textContent = "Tu cuenta no está configurada. Contacta al administrador.";
+    await signOut(auth);
+    return;
+  }
+  const data = snap.data();
+  watchCatalog();
+  if(data.role === "admin"){
+    document.getElementById("adminView").classList.remove("hidden");
+    document.getElementById("adminHello").textContent = "Hola, " + (data.name || "Admin");
+    showAdminSection("pendientes");
+    loadSellers();
+    loadAllPurchases();
+    loadWithdrawals();
+    loadDeniedWithdrawals();
+    loadPaymentConfig();
+    loadCases();
+  } else {
+    document.getElementById("sellerView").classList.remove("hidden");
+    document.getElementById("sellerHello").textContent = "Hola, " + (data.name || "");
+    watchMyBalance(user.uid);
+    renderCatalog(user.uid, data.name);
+    loadMyPurchases(user.uid);
+    loadMyWithdrawals(user.uid);
+    loadMyCases(user.uid);
+  }
+});
+
+// ---------- MENÚ ADMIN ----------
+window.toggleAdminMenu = function(){
+  document.getElementById("adminMenu").classList.toggle("hidden");
+};
+window.showAdminSection = function(sec){
+  ["pendientes","aprobadas","catalogo","casos","general"].forEach(s => {
+    const el = document.getElementById("sec-"+s);
+    if(el) el.classList.toggle("hidden", s !== sec);
+    const btn = document.querySelector('#adminMenu button[data-sec="'+s+'"]');
+    if(btn) btn.classList.toggle("active", s === sec);
+  });
+  document.getElementById("adminMenu").classList.add("hidden");
+};
+
+// ---------- ADMIN ----------
+window.createSeller = async function(){
+  const name = document.getElementById("newName").value.trim();
+  const email = document.getElementById("newEmail").value.trim();
+  const pass = document.getElementById("newPass").value;
+  const msg = document.getElementById("createMsg");
+  msg.textContent = "";
+  if(!name || !email || !pass){ msg.textContent = "Completa todos los campos."; return; }
+  try{
+    const secondaryApp = initializeApp(firebaseConfig, "Secondary" + Date.now());
+    const secondaryAuth = getAuth(secondaryApp);
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+    await setDoc(doc(db,"users",cred.user.uid), { role:"seller", name, email, balance:0, createdAt: serverTimestamp() });
+    await signOut(secondaryAuth);
+    document.getElementById("newName").value = "";
+    document.getElementById("newEmail").value = "";
+    document.getElementById("newPass").value = "";
+  }catch(e){ msg.textContent = "Error: " + e.message; }
+};
+
+let sellersCache = [];
+function loadSellers(){
+  const q = query(collection(db,"users"), where("role","==","seller"));
+  onSnapshot(q, (qs) => {
+    const tbody = document.querySelector("#sellersTable tbody");
+    tbody.innerHTML = "";
+    sellersCache = [];
+    qs.forEach(d => {
+      const s = d.data();
+      sellersCache.push({ id:d.id, name:s.name||"" });
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${s.name||""}</td><td>${s.email||""}</td><td>${money(s.available)}</td>
+        <td><button class="secondary" onclick="removeSeller('${d.id}')">Eliminar</button></td>`;
+      tbody.appendChild(tr);
+    });
+    const sel = document.getElementById("caseSellerId");
+    if(sel){
+      const current = sel.value;
+      sel.innerHTML = '<option value="">Elige un vendedor...</option>' +
+        sellersCache.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
+      if(current) sel.value = current;
+    }
+  });
+}
+window.removeSeller = async function(sellerId){
+  if(!confirm("¿Eliminar este vendedor del panel? Perderá su saldo y no podrá entrar. Sus compras anteriores se conservan.")) return;
+  try{ await deleteDoc(doc(db,"users",sellerId)); showToast("Vendedor eliminado", 3000); }
+  catch(e){ showToast("Error: " + e.message, 8000); }
+};
+let adminFirstLoad = true;
+let purchasesCache = [];
+let searchTerm = "";
+window.setSearch = function(v){ searchTerm = (v||"").trim().toLowerCase(); renderAdminHistory(); };
+
+function loadAllPurchases(){
+  const q = query(collection(db,"purchases"), orderBy("timestamp","desc"));
+  onSnapshot(q, (qs) => {
+    if(!adminFirstLoad){
+      qs.docChanges().forEach(ch => {
+        const p = ch.doc.data();
+        if(ch.type === "added" && p.status === "pendiente" && !ch.doc.metadata.hasPendingWrites){
+          notifyAdmin("🛒 " + (p.sellerName||"Vendedor") + " compró " + (p.product||"") + " (" + money(p.price) + ")");
+        }
+      });
+    }
+    adminFirstLoad = false;
+    purchasesCache = qs.docs.map(d => ({ id:d.id, ...d.data() }));
+    renderPending();
+    renderAdminHistory();
+    renderApproved();
+  });
+}
+
+let approvedSearchTerm = "";
+window.setApprovedSearch = function(v){ approvedSearchTerm = (v||"").trim().toLowerCase(); renderApproved(); };
+function renderApproved(){
+  const box = document.getElementById("approvedList");
+  if(!box) return;
+  box.innerHTML = "";
+  const list = purchasesCache.filter(p => p.status === "entregado" && (!approvedSearchTerm || String(p.jj||"").toLowerCase().includes(approvedSearchTerm)));
+  list.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "order";
+    div.innerHTML = `<div class="t">${p.jj ? `<span class="jj">${esc(p.jj)}</span>` : `<span class="jj none">Sin JJ</span>`}${esc(p.sellerName)} — ${esc(p.product)}</div>
+      <div class="s">${money(p.price)} · Aprobado: ${fecha(p.deliveredAt)}</div>
+      ${p.deliveryMsg ? `<div class="delivery"><b>Comentario:</b>\n${esc(p.deliveryMsg)}</div>` : ""}
+      ${choiceBlock(p)}${proofBlock(p)}`;
+    box.appendChild(div);
+  });
+  if(!list.length) box.innerHTML = '<p style="color:var(--muted);margin:0">' + (approvedSearchTerm ? "No hay resultados para ese JJ." : "Aún no hay cuentas aprobadas.") + '</p>';
+}
+
+function renderPending(){
+  const pend = document.getElementById("pendingList");
+  pend.innerHTML = "";
+  const list = purchasesCache.filter(p => p.status === "pendiente");
+  list.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "order";
+    div.innerHTML = `<div class="t">${esc(p.sellerName)} — ${esc(p.product)}</div>
+      <div class="s">${money(p.price)} · ${fecha(p.timestamp)}</div>
+      ${choiceBlock(p)}${proofBlock(p)}
+      <input id="pj_${p.id}" placeholder="JJ del pedido (código identificador)" style="margin-top:8px" value="${esc(drafts['pj_'+p.id] ?? p.jj ?? '')}" oninput="drafts['pj_${p.id}']=this.value">
+      <textarea id="dm_${p.id}" placeholder="Escribe aquí los datos de la cuenta o el mensaje para el vendedor..." oninput="drafts['${p.id}']=this.value">${esc(drafts[p.id]||"")}</textarea>
+      <div class="row" style="margin-top:8px">
+        <button onclick="deliver('${p.id}')" style="flex:1">Enviar y marcar entregado</button>
+        <button class="secondary" onclick="rejectPurchase('${p.id}')" style="flex:1">Rechazar</button>
+      </div>`;
+    pend.appendChild(div);
+  });
+  document.getElementById("pendCount").textContent = list.length ? "(" + list.length + ")" : "";
+  if(!list.length){
+    pend.innerHTML = '<p style="color:var(--muted);margin:0">No hay pedidos pendientes.</p>';
+    document.title = "Panel JJ TIENDA";
+  }
+}
+
+function renderAdminHistory(){
+  const box = document.getElementById("allPurchasesList");
+  box.innerHTML = "";
+  const list = purchasesCache.filter(p => {
+    if(!searchTerm) return true;
+    return [p.jj, p.sellerName, p.product, p.deliveryMsg].some(v => String(v||"").toLowerCase().includes(searchTerm));
+  });
+  list.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "order";
+    div.innerHTML = `<div class="t">${p.jj ? `<span class="jj">${esc(p.jj)}</span>` : `<span class="jj none">Sin JJ</span>`}${esc(p.sellerName)} — ${esc(p.product)}</div>
+      <div class="s">${money(p.price)} · ${fecha(p.timestamp)} · ${estadoTxt(p.status)}</div>
+      ${p.deliveryMsg ? `<div class="delivery"><b>Mensaje enviado:</b>\n${esc(p.deliveryMsg)}</div>` : ""}
+      ${choiceBlock(p)}${proofBlock(p)}
+      <div class="row" style="margin-top:8px">
+        <input id="hj_${p.id}" placeholder="JJ del pedido" value="${esc(drafts['hj_'+p.id] ?? p.jj ?? '')}" oninput="drafts['hj_${p.id}']=this.value">
+        <button onclick="saveJJ('${p.id}')">Guardar JJ</button>
+      </div>`;
+    box.appendChild(div);
+  });
+  if(!list.length) box.innerHTML = '<p style="color:var(--muted);margin:0">' + (searchTerm ? "No hay resultados para tu búsqueda." : "Aún no hay compras.") + '</p>';
+}
+
+async function checkDuplicateJJ(id, jj){
+  if(!jj) return true;
+  const dup = purchasesCache.find(p => p.id !== id && String(p.jj||"").toLowerCase() === jj.toLowerCase());
+  if(!dup) return true;
+  return confirm("El JJ " + jj + " ya está asignado al pedido de " + (dup.sellerName||"otro vendedor") + " (" + (dup.product||"") + "). ¿Usarlo de todos modos?");
+}
+
+window.saveJJ = async function(id){
+  const jj = (document.getElementById("hj_"+id)?.value || "").trim();
+  if(!(await checkDuplicateJJ(id, jj))) return;
+  try{
+    await updateDoc(doc(db,"purchases",id), { jj });
+    delete drafts["hj_"+id]; delete drafts["pj_"+id];
+    showToast(jj ? "JJ guardado: " + jj : "JJ borrado", 3000);
+  }catch(e){ showToast("Error: " + e.message, 8000); }
+};
+
+window.rejectPurchase = async function(id){
+  const reason = prompt("Motivo del rechazo (el vendedor lo verá). Puedes dejarlo vacío:", "");
+  if(reason === null) return;
+  try{
+    await updateDoc(doc(db,"purchases",id), { status:"rechazado", rejectReason: (reason||"").trim(), rejectedAt: serverTimestamp() });
+    delete drafts[id]; delete drafts["pj_"+id];
+    showToast("Pedido rechazado", 3000);
+  }catch(e){ showToast("Error: " + e.message, 8000); }
+};
+
+window.deliver = async function(id){
+  const box = document.getElementById("dm_"+id);
+  const text = box ? box.value.trim() : "";
+  const jj = (document.getElementById("pj_"+id)?.value || "").trim();
+  if(!(await checkDuplicateJJ(id, jj))) return;
+  try{
+    const added = await runTransaction(db, async (tx) => {
+      const pRef = doc(db,"purchases",id);
+      const pSnap = await tx.get(pRef);
+      if(!pSnap.exists()) throw new Error("El pedido no existe.");
+      const p = pSnap.data();
+      if(p.status === "entregado") throw new Error("Este pedido ya estaba entregado.");
+      const uRef = p.sellerId ? doc(db,"users",p.sellerId) : null;
+      const uSnap = uRef ? await tx.get(uRef) : null;
+      const addCommission = p.commissionChoice !== "retirada";
+      tx.update(pRef, { status:"entregado", deliveryMsg:text, jj, commission: addCommission ? COMMISSION : 0, deliveredAt: serverTimestamp() });
+      if(addCommission && uSnap && uSnap.exists()) tx.update(uRef, { available: increment(COMMISSION) });
+      return addCommission;
+    });
+    delete drafts[id]; delete drafts["pj_"+id]; delete drafts["hj_"+id];
+    showToast(added ? "✅ Pedido entregado. Comisión de " + money(COMMISSION) + " sumada al vendedor" : "✅ Pedido entregado. El vendedor ya sacó su comisión: no se sumó nada", 5000);
+    playSound("ok");
+  }catch(e){ showToast("Error: " + e.message, 8000); }
+};
+
+// ---------- CATÁLOGO (admin) ----------
+function renderCatalogEditor(){
+  const box = document.getElementById("catalogEditList");
+  if(!box) return;
+  box.innerHTML = CATALOG.map(p => `
+    <div class="order">
+      <input id="pn_${p.id}" value="${esc(drafts['pn_'+p.id] ?? p.name ?? '')}" oninput="drafts['pn_${p.id}']=this.value" placeholder="Nombre">
+      <div class="row">
+        <input id="pp_${p.id}" type="number" inputmode="numeric" value="${drafts['pp_'+p.id] ?? p.price ?? 0}" oninput="drafts['pp_${p.id}']=this.value" placeholder="Precio">
+        <input id="ps_${p.id}" type="number" inputmode="numeric" value="${drafts['ps_'+p.id] ?? (p.suggestedPrice ?? '')}" oninput="drafts['ps_${p.id}']=this.value" placeholder="Precio sugerido">
+      </div>
+      <button onclick="saveProduct('${p.id}')" style="width:100%">Guardar</button>
+    </div>`).join("");
+  if(!CATALOG.length) box.innerHTML = '<p style="color:var(--muted);margin:0">Cargando catálogo...</p>';
+}
+window.saveProduct = async function(id){
+  const name = (document.getElementById("pn_"+id)?.value || "").trim();
+  const price = Number(document.getElementById("pp_"+id)?.value) || 0;
+  const suggestedRaw = document.getElementById("ps_"+id)?.value ?? "";
+  const suggestedPrice = suggestedRaw === "" ? null : (Number(suggestedRaw) || 0);
+  if(!name || price <= 0){ showToast("Escribe un nombre y un precio válido.", 5000); return; }
+  try{
+    await updateDoc(doc(db,"catalog",id), { name, price, suggestedPrice });
+    ["pn_","pp_","ps_"].forEach(pre => delete drafts[pre+id]);
+    showToast("Producto actualizado", 3000);
+  }catch(e){ showToast("Error: " + e.message, 8000); }
+};
+window.addProduct = async function(){
+  const msg = document.getElementById("newProdMsg");
+  msg.textContent = "";
+  const name = document.getElementById("newProdName").value.trim();
+  const price = Number(document.getElementById("newProdPrice").value) || 0;
+  const suggestedRaw = document.getElementById("newProdSuggested").value;
+  const suggestedPrice = suggestedRaw === "" ? null : (Number(suggestedRaw) || 0);
+  if(!name || price <= 0){ msg.textContent = "Escribe un nombre y un precio válido."; return; }
+  try{
+    await setDoc(doc(collection(db,"catalog")), { name, price, suggestedPrice, createdAt: serverTimestamp() });
+    document.getElementById("newProdName").value = "";
+    document.getElementById("newProdPrice").value = "";
+    document.getElementById("newProdSuggested").value = "";
+    showToast("Producto agregado al catálogo", 3000);
+  }catch(e){ msg.textContent = "Error: " + e.message; }
+};
+
+// ---------- CASOS PENDIENTES (admin) ----------
+function loadCases(){
+  const q = query(collection(db,"cases"), where("status","==","pendiente"));
+  onSnapshot(q, (qs) => {
+    const box = document.getElementById("casesList");
+    if(!box) return;
+    box.innerHTML = "";
+    const docs = qs.docs.slice().sort((a,b) => {
+      const ta = a.data().updatedAt?.toMillis ? a.data().updatedAt.toMillis() : 0;
+      const tb = b.data().updatedAt?.toMillis ? b.data().updatedAt.toMillis() : 0;
+      return tb - ta;
+    });
+    docs.forEach(d => {
+      const c = d.data();
+      const div = document.createElement("div");
+      div.className = "order";
+      div.innerHTML = `<div class="t">${c.jj ? `<span class="jj">${esc(c.jj)}</span>` : ""}${esc(c.sellerName)}</div>
+        <div class="s">${fecha(c.updatedAt || c.createdAt)}</div>
+        <textarea id="cm_${d.id}" oninput="drafts['cm_${d.id}']=this.value">${esc(drafts['cm_'+d.id] ?? c.message ?? "")}</textarea>
+        <div class="row" style="margin-top:8px">
+          <button onclick="updateCase('${d.id}')" style="flex:1">Guardar mensaje</button>
+          <button class="secondary" onclick="resolveCase('${d.id}')" style="flex:1">Marcar resuelto</button>
+        </div>`;
+      box.appendChild(div);
+    });
+    const c1 = document.getElementById("casesCount"); if(c1) c1.textContent = docs.length ? "(" + docs.length + ")" : "";
+    const c2 = document.getElementById("mnCasos");
+    if(c2){ c2.classList.toggle("hidden", !docs.length); c2.textContent = docs.length || ""; }
+    if(!docs.length) box.innerHTML = '<p style="color:var(--muted);margin:0">No hay casos pendientes.</p>';
+  }, (err) => {
+    const box = document.getElementById("casesList");
+    if(box) box.innerHTML = '<p class="msg">Error al cargar casos: ' + esc(err.message) + '</p>';
+  });
+}
+window.createCase = async function(){
+  const msg = document.getElementById("caseMsgStatus");
+  msg.textContent = "";
+  const sellerId = document.getElementById("caseSellerId").value;
+  const seller = sellersCache.find(s => s.id === sellerId);
+  const jj = document.getElementById("caseJJ").value.trim();
+  const message = document.getElementById("caseMsg").value.trim();
+  if(!sellerId || !message){ msg.textContent = "Elige un vendedor y escribe el mensaje."; return; }
+  try{
+    await setDoc(doc(collection(db,"cases")), {
+      sellerId, sellerName: seller?.name || "", jj, message, status:"pendiente",
+      createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+    });
+    document.getElementById("caseSellerId").value = "";
+    document.getElementById("caseJJ").value = "";
+    document.getElementById("caseMsg").value = "";
+    showToast("Caso enviado al vendedor", 3000);
+  }catch(e){ msg.textContent = "Error: " + e.message; }
+};
+window.updateCase = async function(id){
+  const text = (document.getElementById("cm_"+id)?.value || "").trim();
+  try{
+    await updateDoc(doc(db,"cases",id), { message: text, updatedAt: serverTimestamp() });
+    delete drafts["cm_"+id];
+    showToast("Mensaje actualizado", 3000);
+  }catch(e){ showToast("Error: " + e.message, 8000); }
+};
+window.resolveCase = async function(id){
+  if(!confirm("¿Marcar este caso como resuelto? Dejará de salir en Casos pendientes.")) return;
+  try{ await updateDoc(doc(db,"cases",id), { status:"resuelto", updatedAt: serverTimestamp() }); }
+  catch(e){ showToast("Error: " + e.message, 8000); }
+};
+
+// ---------- CUENTAS DE PAGO (admin) ----------
+let lastCfgAmounts = {};
+function renderCfgProductsList(){
+  const box = document.getElementById("cfgProducts");
+  if(!box) return;
+  box.innerHTML = CATALOG.map(p => `
+    <div class="product-row" style="flex-wrap:wrap;gap:6px">
+      <span style="flex:1 1 100%">${esc(p.name)}</span>
+      <input id="cfgP_${p.id}_1" type="number" inputmode="numeric" placeholder="Monto cuenta 1" style="flex:1;margin:0" value="${lastCfgAmounts[p.id]?.a1 || ""}">
+      <input id="cfgP_${p.id}_2" type="number" inputmode="numeric" placeholder="Monto cuenta 2" style="flex:1;margin:0" value="${lastCfgAmounts[p.id]?.a2 || ""}">
+    </div>`).join("");
+  if(!CATALOG.length) box.innerHTML = '<p style="color:var(--muted);margin:0">Cargando catálogo...</p>';
+}
+function loadPaymentConfig(){
+  renderCfgProductsList();
+  onSnapshot(doc(db,"config","payments"), (d) => {
+    const c = d.exists() ? d.data() : {};
+    lastCfgAmounts = c.amounts || {};
+    const fill = (id, v) => { const el = document.getElementById(id); if(el && document.activeElement !== el) el.value = v ?? ""; };
+    fill("cfgNum1", c.acc1Number); fill("cfgNum2", c.acc2Number);
+    CATALOG.forEach(p => {
+      fill("cfgP_"+p.id+"_1", c.amounts?.[p.id]?.a1 || "");
+      fill("cfgP_"+p.id+"_2", c.amounts?.[p.id]?.a2 || "");
+    });
+  }, (err) => {
+    document.getElementById("cfgMsg").textContent = "Error al cargar las cuentas: " + err.message;
+  });
+}
+window.savePaymentConfig = async function(){
+  const msg = document.getElementById("cfgMsg");
+  msg.className = "msg"; msg.textContent = "";
+  const amounts = {};
+  CATALOG.forEach(p => {
+    amounts[p.id] = {
+      a1: Number(document.getElementById("cfgP_"+p.id+"_1").value) || 0,
+      a2: Number(document.getElementById("cfgP_"+p.id+"_2").value) || 0
+    };
+  });
+  const data = {
+    acc1Number: document.getElementById("cfgNum1").value.trim(),
+    acc2Number: document.getElementById("cfgNum2").value.trim(),
+    amounts,
+    updatedAt: serverTimestamp()
+  };
+  try{
+    await setDoc(doc(db,"config","payments"), data);
+    msg.className = "msg ok"; msg.textContent = "✅ Cuentas y montos guardados.";
+    showToast("Cuentas y montos guardados", 3000);
+  }catch(e){ msg.textContent = "Error: " + e.message; }
+};
+
+// ---------- COMPROBANTES (admin) ----------
+const proofsOpen = new Set();
+const proofsCache = {};
+window.toggleProofs = async function(id){
+  if(proofsOpen.has(id)){ proofsOpen.delete(id); }
+  else{
+    proofsOpen.add(id);
+    if(!proofsCache[id]){
+      try{
+        const snap = await getDoc(doc(db,"proofs",id));
+        proofsCache[id] = snap.exists() ? snap.data() : { error: "No se encontraron los comprobantes." };
+      }catch(e){ proofsCache[id] = { error: "Error: " + e.message }; }
+    }
+  }
+  renderPending(); renderAdminHistory();
+};
+function choiceBlock(p){
+  if(p.commissionChoice === "sumar") return '<div class="s" style="margin-top:6px">💰 El vendedor quiere que la comisión se sume a su saldo disponible</div>';
+  if(p.commissionChoice === "retirada") return '<div class="s" style="margin-top:6px">✋ El vendedor ya sacó su comisión (no se suma nada)</div>';
+  return "";
+}
+function proofBlock(p){
+  if(!p.hasProof) return "";
+  const open = proofsOpen.has(p.id);
+  let html = `<button class="secondary" style="margin-top:8px" onclick="toggleProofs('${p.id}')">${open ? "Ocultar comprobantes" : "📎 Ver comprobantes"}</button>`;
+  if(open){
+    const pr = proofsCache[p.id];
+    if(!pr){ html += '<p class="s">Cargando...</p>'; }
+    else if(pr.error){ html += `<p class="msg">${esc(pr.error)}</p>`; }
+    else{
+      html += '<div class="proofs">' + [1,2].map(n => {
+        const img = String(pr["img"+n] || "");
+        if(!img.startsWith("data:image/")) return "";
+        const acc = (p.payAccounts || [])[n-1];
+        return `<div class="proof"><div class="s">Comprobante ${n}${acc ? " — cuenta " + esc(acc.number) + " · " + money(acc.amount) : ""}</div>
+          <img src="${img}" alt="Comprobante ${n}">
+          <a class="dl" href="${img}" download="comprobante-${n}-${p.id}.jpg">⬇ Descargar</a></div>`;
+      }).join("") + '</div>';
+    }
+  }
+  return html;
+}
+
+// ---------- RETIROS ----------
+const WD_KEEP_MS = 30 * 24 * 60 * 60 * 1000; // el historial de retiros dura 30 días
+const wdResolvedMs = w => w.resolvedAt?.toMillis ? w.resolvedAt.toMillis() : (w.timestamp?.toMillis ? w.timestamp.toMillis() : Date.now());
+const openReasons = new Set();
+const wdTxt = st => st === "pendiente" ? '<span class="badge-pend">⏳ Retiro pendiente</span>'
+                  : st === "aprobado" ? '<span class="badge-ok">✅ Retiro aprobado</span>'
+                  : st === "negado" ? '<span class="badge-rej">❌ Retiro negado</span>' : "—";
+
+// Admin: retiros pendientes
+let wdAdminFirstLoad = true;
+function loadWithdrawals(){
+  wdAdminFirstLoad = true;
+  const q = query(collection(db,"withdrawals"), where("status","==","pendiente"));
+  onSnapshot(q, (qs) => {
+    if(!wdAdminFirstLoad){
+      qs.docChanges().forEach(ch => {
+        const w = ch.doc.data();
+        if(ch.type === "added" && !ch.doc.metadata.hasPendingWrites){
+          notifyAdmin("💸 " + (w.sellerName||"Vendedor") + " solicita retirar " + money(w.amount), "Nuevo retiro");
+        }
+      });
+    }
+    wdAdminFirstLoad = false;
+    const box = document.getElementById("pendingWithdrawals");
+    box.innerHTML = "";
+    const docs = qs.docs.slice().sort((a,b) => {
+      const ta = a.data().timestamp?.toMillis ? a.data().timestamp.toMillis() : Date.now();
+      const tb = b.data().timestamp?.toMillis ? b.data().timestamp.toMillis() : Date.now();
+      return tb - ta;
+    });
+    docs.forEach(d => {
+      const w = d.data();
+      const div = document.createElement("div");
+      div.className = "order";
+      div.innerHTML = `<div class="t">${esc(w.sellerName)} — ${money(w.amount)}</div>
+        <div class="s">Nequi: <b>${esc(w.nequi)}</b> · ${fecha(w.timestamp)}</div>
+        <div class="row" style="margin-top:8px">
+          <button onclick="approveWithdraw('${d.id}')" style="flex:1">Aceptar</button>
+          <button class="secondary" onclick="denyWithdraw('${d.id}')" style="flex:1">Negar</button>
+        </div>`;
+      box.appendChild(div);
+    });
+    document.getElementById("wdPendCount").textContent = docs.length ? "(" + docs.length + ")" : "";
+    if(!docs.length) box.innerHTML = '<p style="color:var(--muted);margin:0">No hay retiros pendientes.</p>';
+  }, (err) => {
+    document.getElementById("pendingWithdrawals").innerHTML = '<p class="msg">Error al cargar retiros: ' + esc(err.message) + '</p>';
+  });
+}
+
+function loadDeniedWithdrawals(){
+  const q = query(collection(db,"withdrawals"), where("status","==","negado"));
+  onSnapshot(q, (qs) => {
+    const box = document.getElementById("deniedWithdrawals");
+    box.innerHTML = "";
+    const docs = qs.docs.slice().sort((a,b) => wdResolvedMs(b.data()) - wdResolvedMs(a.data()));
+    docs.forEach(d => {
+      const w = d.data();
+      const div = document.createElement("div");
+      div.className = "order";
+      div.innerHTML = `<div class="t">${esc(w.sellerName)} — ${money(w.amount)}</div>
+        <div class="s">Nequi: <b>${esc(w.nequi)}</b> · ${fecha(w.resolvedAt || w.timestamp)}</div>
+        <textarea id="dr_${d.id}" placeholder="Motivo que verá el vendedor..." oninput="drafts['dr_${d.id}']=this.value">${esc(drafts['dr_'+d.id] ?? w.denyReason ?? "")}</textarea>
+        <button onclick="saveDenyReason('${d.id}')" style="width:100%">Guardar motivo</button>`;
+      box.appendChild(div);
+    });
+    if(!docs.length) box.innerHTML = '<p style="color:var(--muted);margin:0">No hay retiros negados.</p>';
+  }, (err) => {
+    document.getElementById("deniedWithdrawals").innerHTML = '<p class="msg">Error al cargar retiros negados: ' + esc(err.message) + '</p>';
+  });
+}
+
+window.saveDenyReason = async function(id){
+  const text = (document.getElementById("dr_"+id)?.value || "").trim();
+  try{
+    await updateDoc(doc(db,"withdrawals",id), { denyReason: text });
+    delete drafts["dr_"+id];
+    showToast("Motivo guardado", 3000);
+  }catch(e){ showToast("Error: " + e.message, 8000); }
+};
+
+window.approveWithdraw = async function(id){
+  if(!confirm("¿Aprobar este retiro? Confirma que ya enviaste el dinero por Nequi.")) return;
+  try{
+    await runTransaction(db, async (tx) => {
+      const ref = doc(db,"withdrawals",id);
+      const snap = await tx.get(ref);
+      if(!snap.exists() || snap.data().status !== "pendiente") throw new Error("Este retiro ya fue procesado.");
+      tx.update(ref, { status:"aprobado", resolvedAt: serverTimestamp(), expireAt: new Date(Date.now() + WD_KEEP_MS) });
+    });
+    showToast("✅ Retiro aprobado", 3000);
+    playSound("ok");
+  }catch(e){ showToast("Error: " + e.message, 8000); }
+};
+
+window.denyWithdraw = async function(id){
+  const reason = prompt("¿Negar este retiro? El monto volverá al saldo disponible del vendedor.\n\nEscribe el motivo (el vendedor lo verá). Puedes dejarlo vacío:", "");
+  if(reason === null) return;
+  try{
+    await runTransaction(db, async (tx) => {
+      const ref = doc(db,"withdrawals",id);
+      const snap = await tx.get(ref);
+      if(!snap.exists() || snap.data().status !== "pendiente") throw new Error("Este retiro ya fue procesado.");
+      const w = snap.data();
+      const uRef = doc(db,"users",w.sellerId);
+      const uSnap = await tx.get(uRef);
+      tx.update(ref, { status:"negado", denyReason: reason.trim(), resolvedAt: serverTimestamp(), expireAt: new Date(Date.now() + WD_KEEP_MS) });
+      if(uSnap.exists()) tx.update(uRef, { available: increment(Number(w.amount)||0) });
+    });
+    showToast("Retiro negado. El monto volvió al saldo disponible del vendedor", 4000);
+    playSound("ok");
+  }catch(e){ showToast("Error: " + e.message, 8000); }
+};
+
+// Vendedor: solicitar retiro y ver mis retiros
+window.toggleWithdrawals = function(){
+  const panel = document.getElementById("withdrawalsPanel");
+  panel.classList.toggle("hidden");
+  document.getElementById("wdArrow").textContent = panel.classList.contains("hidden") ? "▾" : "▴";
+};
+window.showWdTab = function(tab){
+  ["retirar","pendiente","historial"].forEach(t => {
+    document.getElementById("wdPane_"+t).classList.toggle("hidden", t !== tab);
+    document.getElementById("tab_"+t).classList.toggle("active", t === tab);
+  });
+};
+window.openWithdraw = function(){
+  document.getElementById("withdrawalsPanel").classList.remove("hidden");
+  document.getElementById("wdArrow").textContent = "▴";
+  showWdTab("retirar");
+  document.getElementById("withdrawalsCard").scrollIntoView({behavior:"smooth", block:"start"});
+};
+
+window.togglePurchases = function(){
+  const panel = document.getElementById("purchasesPanel");
+  panel.classList.toggle("hidden");
+  document.getElementById("pcArrow").textContent = panel.classList.contains("hidden") ? "▾" : "▴";
+};
+window.toggleDenyReason = function(id){
+  const el = document.getElementById("dv_"+id);
+  if(!el) return;
+  el.classList.toggle("hidden");
+  if(el.classList.contains("hidden")) openReasons.delete(id); else openReasons.add(id);
+};
+
+window.requestWithdraw = async function(){
+  const user = auth.currentUser;
+  const msg = document.getElementById("wdMsg");
+  msg.className = "msg"; msg.textContent = "";
+  const amount = Math.floor(Number(document.getElementById("wdAmount").value));
+  const nequi = document.getElementById("wdNequi").value.replace(/\D/g, "");
+  if(!user) return;
+  if(!amount || amount <= 0){ msg.textContent = "Escribe un monto válido."; return; }
+  if(nequi.length !== 10){ msg.textContent = "El número de Nequi debe tener 10 dígitos."; return; }
+  try{
+    await runTransaction(db, async (tx) => {
+      const uRef = doc(db,"users",user.uid);
+      const snap = await tx.get(uRef);
+      const data = snap.data();
+      const avail = Number(data.available || 0);
+      if(amount > avail) throw new Error("Tu saldo disponible es " + money(avail) + ". Escribe un monto menor o igual.");
+      tx.update(uRef, { available: avail - amount });
+      tx.set(doc(collection(db,"withdrawals")), {
+        sellerId: user.uid, sellerName: data.name || "", amount, nequi,
+        status: "pendiente", timestamp: serverTimestamp()
+      });
+    });
+    document.getElementById("wdAmount").value = "";
+    document.getElementById("wdNequi").value = "";
+    showWdTab("pendiente");
+    showToast("✅ Solicitud de retiro enviada. Queda como retiro pendiente.", 6000);
+    playSound("ok");
+  }catch(e){ msg.textContent = e.message; }
+};
+
+let wdSellerFirstLoad = true;
+function loadMyWithdrawals(uid){
+  wdSellerFirstLoad = true;
+  const q = query(collection(db,"withdrawals"), where("sellerId","==",uid));
+  onSnapshot(q, (qs) => {
+    if(!wdSellerFirstLoad){
+      qs.docChanges().forEach(ch => {
+        const w = ch.doc.data();
+        if(ch.type !== "modified") return;
+        if(w.status === "aprobado"){
+          showToast("✅ Tu retiro de " + money(w.amount) + " fue aprobado", 10000);
+          playSound("done");
+        } else if(w.status === "negado"){
+          showToast("❌ Tu retiro de " + money(w.amount) + " fue negado. El monto volvió a tu saldo disponible. Mira el motivo en Historial.", 10000);
+          playSound("done");
+        }
+        try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
+      });
+    }
+    wdSellerFirstLoad = false;
+    const pendBox = document.getElementById("myPendingWithdrawals");
+    const histBox = document.getElementById("myWithdrawalsHistory");
+    pendBox.innerHTML = ""; histBox.innerHTML = "";
+    let pendCount = 0, histCount = 0;
+    const docs = qs.docs.slice().sort((a,b) => {
+      const ta = a.data().timestamp?.toMillis ? a.data().timestamp.toMillis() : Date.now();
+      const tb = b.data().timestamp?.toMillis ? b.data().timestamp.toMillis() : Date.now();
+      return tb - ta;
+    });
+    docs.forEach(d => {
+      const w = d.data();
+      if(w.status !== "pendiente" && Date.now() - wdResolvedMs(w) > WD_KEEP_MS) return;
+      const div = document.createElement("div");
+      div.className = "order";
+      const denied = w.status === "negado";
+      const why = denied ? ` <button class="secondary" style="margin-left:6px;padding:3px 8px;font-size:12px" onclick="toggleDenyReason('${d.id}')">¿Por qué retiro negado?</button>` : "";
+      const reasonBox = denied ? `<div class="s">El monto volvió a tu saldo disponible.</div>
+        <div class="delivery ${openReasons.has(d.id) ? "" : "hidden"}" id="dv_${d.id}"><b>Motivo del administrador:</b>\n${w.denyReason ? esc(w.denyReason) : "El administrador no dejó un motivo."}</div>` : "";
+      div.innerHTML = `<div class="t">${money(w.amount)} — Nequi ${esc(w.nequi)}</div>
+        <div class="s">${fecha(w.timestamp)} · ${wdTxt(w.status)}${why}</div>` + reasonBox;
+      if(w.status === "pendiente"){ pendBox.appendChild(div); pendCount++; }
+      else { histBox.appendChild(div); histCount++; }
+    });
+    if(!pendCount) pendBox.innerHTML = '<p style="color:var(--muted);margin:0">No tienes retiros pendientes.</p>';
+    if(!histCount) histBox.innerHTML = '<p style="color:var(--muted);margin:0">Aún no tienes retiros aprobados o negados.</p>';
+    document.getElementById("wdPendBadge").textContent = pendCount ? "(" + pendCount + ")" : "";
+  }, (err) => {
+    const m = '<p class="msg">Error al cargar tus retiros: ' + esc(err.message) + '</p>';
+    document.getElementById("myPendingWithdrawals").innerHTML = m;
+    document.getElementById("myWithdrawalsHistory").innerHTML = m;
+  });
+}
+
+// ---------- CASOS (vendedor) ----------
+const caseTxt = st => st === "pendiente" ? '<span class="badge-pend">⏳ Pendiente</span>' : '<span class="badge-ok">✅ Resuelto</span>';
+function loadMyCases(uid){
+  const q = query(collection(db,"cases"), where("sellerId","==",uid));
+  onSnapshot(q, (qs) => {
+    const list = document.getElementById("myCasesList");
+    if(!list) return;
+    list.innerHTML = "";
+    const docs = qs.docs.slice().sort((a,b) => {
+      const ta = a.data().updatedAt?.toMillis ? a.data().updatedAt.toMillis() : 0;
+      const tb = b.data().updatedAt?.toMillis ? b.data().updatedAt.toMillis() : 0;
+      return tb - ta;
+    });
+    let pendCount = 0;
+    docs.forEach(d => {
+      const c = d.data();
+      if(c.status === "pendiente") pendCount++;
+      const div = document.createElement("div");
+      div.className = "order";
+      div.innerHTML = `<div class="t">${c.jj ? `<span class="jj">${esc(c.jj)}</span>` : ""}Caso — ${caseTxt(c.status)}</div>
+        <div class="s">${fecha(c.updatedAt || c.createdAt)}</div>
+        <div class="delivery">${esc(c.message||"")}</div>`;
+      list.appendChild(div);
+    });
+    const badge = document.getElementById("myCasesCount");
+    if(badge) badge.textContent = pendCount ? "(" + pendCount + ")" : "";
+    if(!docs.length) list.innerHTML = '<p style="color:var(--muted);margin:0">No tienes casos.</p>';
+  }, (err) => {
+    document.getElementById("myCasesList").innerHTML = '<p class="msg">Error al cargar tus casos: ' + esc(err.message) + '</p>';
+  });
+}
+
+// ---------- VENDEDOR ----------
+let mySellerName = "";
+function watchMyBalance(uid){
+  onSnapshot(doc(db,"users",uid), (d) => {
+    document.getElementById("myAvailable").textContent = money(d.data()?.available || 0);
+  });
+}
+function renderCatalog(uid, name){
+  mySellerName = name || "";
+  const el = document.getElementById("catalog");
+  el.innerHTML = CATALOG.map(p => `
+    <div class="product-row">
+      <span>${p.name} — ${money(p.price)}</span>
+      <button onclick="openBuy('${p.id}')">Comprar</button>
+    </div>`).join("");
+}
+
+// Comprimir la imagen para guardarla en Firestore (máx. ~380 KB por comprobante)
+function compressImage(file){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      for(const side of [1300, 1000, 800, 600]){
+        const scale = Math.min(1, side / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        for(const q of [0.8, 0.65, 0.5]){
+          const out = c.toDataURL("image/jpeg", q);
+          if(out.length <= 380000){ resolve(out); return; }
+        }
+      }
+      reject(new Error("La imagen es muy pesada. Prueba con una captura más pequeña."));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("No se pudo leer la imagen.")); };
+    img.src = url;
+  });
+}
+
+let buyState = null;
+function payInfoHtml(n, a){
+  if(a.ok){
+    return `<div class="s">Cuenta ${n} — envía exactamente</div>
+      <div class="amt">${money(a.amount)}</div>
+      <div class="s" style="margin-top:6px">al número</div>
+      <div class="num">${esc(a.number)}</div>`;
+  }
+  return `<div class="s">Cuenta ${n}</div><div class="pend">Monto y número de cuenta pendiente</div>`;
+}
+window.openBuy = async function(productId){
+  const product = CATALOG.find(p => p.id === productId);
+  if(!product) return;
+  buyState = { productId, img1:null, img2:null, accounts:null, sending:false };
+  document.getElementById("buyTitle").textContent = product.name;
+  document.getElementById("buyModalMsg").textContent = "";
+  document.querySelectorAll('#buyModal input[name="commOpt"]').forEach(r => r.checked = false);
+  [1,2].forEach(n => {
+    document.getElementById("prev"+n).classList.add("hidden");
+    document.getElementById("prev"+n).removeAttribute("src");
+    document.getElementById("uplTxt"+n).textContent = "📷 Toca para subir el comprobante " + n;
+    document.querySelectorAll("#buyModal input[type=file]").forEach(i => i.value = "");
+    document.getElementById("payInfo"+n).innerHTML = '<div class="s">Cargando datos de pago...</div>';
+  });
+  document.getElementById("buyModal").classList.remove("hidden");
+  let cfg = {}, loadErr = "";
+  try{
+    const snap = await getDoc(doc(db,"config","payments"));
+    cfg = snap.exists() ? snap.data() : {};
+  }catch(e){ loadErr = "No se pudieron cargar los datos de pago."; }
+  if(!buyState) return;
+  buyState.accounts = [1,2].map(n => {
+    const number = String(cfg["acc"+n+"Number"] || "").trim();
+    const amount = Number(cfg.amounts?.[productId]?.["a"+n] || 0);
+    return { number, amount, ok: !!number && amount > 0 };
+  });
+  buyState.accounts.forEach((a,i) => { document.getElementById("payInfo"+(i+1)).innerHTML = payInfoHtml(i+1, a); });
+  if(loadErr){ const m = document.getElementById("buyModalMsg"); m.className = "msg"; m.textContent = loadErr; }
+};
+window.closeBuy = function(){
+  document.getElementById("buyModal").classList.add("hidden");
+  buyState = null;
+};
+window.pickProof = async function(n, input){
+  const file = input.files && input.files[0];
+  if(!file || !buyState) return;
+  const msg = document.getElementById("buyModalMsg");
+  msg.className = "msg"; msg.textContent = "";
+  try{
+    const data = await compressImage(file);
+    if(!buyState) return;
+    buyState["img"+n] = data;
+    const prev = document.getElementById("prev"+n);
+    prev.src = data; prev.classList.remove("hidden");
+    document.getElementById("uplTxt"+n).textContent = "Cambiar comprobante " + n;
+  }catch(e){ msg.textContent = e.message; }
+};
+window.confirmBuy = async function(){
+  const st = buyState;
+  if(!st || st.sending) return;
+  const msg = document.getElementById("buyModalMsg");
+  msg.className = "msg"; msg.textContent = "";
+  if(!st.accounts || !st.accounts.every(a => a.ok)){ msg.textContent = "Los datos de pago siguen pendientes. Intenta más tarde."; return; }
+  if(!st.img1 || !st.img2){ msg.textContent = "Sube los dos comprobantes."; return; }
+  const choiceEl = document.querySelector('#buyModal input[name="commOpt"]:checked');
+  if(!choiceEl){ msg.textContent = "Elige una opción para tu comisión."; return; }
+  const commissionChoice = choiceEl.value;
+  const user = auth.currentUser;
+  const product = CATALOG.find(p => p.id === st.productId);
+  if(!user || !product) return;
+  const btn = document.getElementById("buyDoneBtn");
+  st.sending = true; btn.disabled = true; btn.textContent = "Enviando...";
+  try{
+    await runTransaction(db, async (tx) => {
+      const pRef = doc(collection(db,"purchases"));
+      tx.set(pRef, {
+        sellerId: user.uid, sellerName: mySellerName, product: product.name, price: product.price,
+        status: "pendiente", hasProof: true, commissionChoice,
+        payAccounts: st.accounts.map(a => ({ number: a.number, amount: a.amount })),
+        timestamp: serverTimestamp()
+      });
+      tx.set(doc(db,"proofs",pRef.id), { sellerId: user.uid, img1: st.img1, img2: st.img2, timestamp: serverTimestamp() });
+    });
+    closeBuy();
+    const bm = document.getElementById("buyMsg");
+    bm.className = "msg ok";
+    bm.textContent = "✅ Comprobantes enviados. Tu pedido de " + product.name + " está en proceso. Te avisaremos cuando esté listo.";
+    showToast("✅ Tu pedido de " + product.name + " está en proceso", 8000);
+    playSound("ok");
+  }catch(e){ msg.textContent = e.message; }
+  finally{ st.sending = false; btn.disabled = false; btn.textContent = "Todo listo!!"; }
+};
+window.copyMsg = async function(id){
+  try{ await navigator.clipboard.writeText(myMsgs[id]||""); showToast("Mensaje copiado", 2500); }
+  catch(e){ showToast("No se pudo copiar, selecciona el texto manualmente", 4000); }
+};
+let sellerFirstLoad = true;
+function loadMyPurchases(uid){
+  const q = query(collection(db,"purchases"), where("sellerId","==",uid));
+  onSnapshot(q, (qs) => {
+    if(!sellerFirstLoad){
+      qs.docChanges().forEach(ch => {
+        const p = ch.doc.data();
+        if(ch.type === "modified" && p.status === "entregado"){
+          showToast("✅ Tu pedido de " + (p.product||"") + " fue entregado. Revisa el mensaje en Mis compras.", 10000);
+          playSound("done");
+          try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
+        }
+      });
+    }
+    sellerFirstLoad = false;
+    const list = document.getElementById("myPurchasesList");
+    list.innerHTML = "";
+    window.myMsgs = {};
+    const docs = qs.docs.slice().sort((a,b) => {
+      const ta = a.data().timestamp?.toMillis ? a.data().timestamp.toMillis() : Date.now();
+      const tb = b.data().timestamp?.toMillis ? b.data().timestamp.toMillis() : Date.now();
+      return tb - ta;
+    });
+    docs.forEach(d => {
+      const p = d.data();
+      myMsgs[d.id] = p.deliveryMsg || "";
+      const div = document.createElement("div");
+      div.className = "order";
+      div.innerHTML = `<div class="t">${p.jj ? `<span class="jj">${esc(p.jj)}</span>` : ""}${esc(p.product)} — ${money(p.price)}</div>
+        <div class="s">${fecha(p.timestamp)} · ${estadoTxt(p.status)}</div>` +
+        (p.deliveryMsg ? `<div class="delivery">${esc(p.deliveryMsg)}</div>
+          <button class="secondary" style="margin-top:8px" onclick="copyMsg('${d.id}')">Copiar mensaje</button>` : "");
+      list.appendChild(div);
+    });
+    if(!qs.size) list.innerHTML = '<p style="color:var(--muted);margin:0">Aún no has hecho compras.</p>';
+  }, (err) => {
+    document.getElementById("myPurchasesList").innerHTML = '<p class="msg">Error al cargar tus compras: ' + esc(err.message) + '</p>';
+  });
+}
+</script>
+</body>
+</html>
